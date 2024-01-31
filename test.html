@@ -1,50 +1,31 @@
 {{Frente}}
-<!-- Campo da Pergunta -->
-<div id="container">
-  <div id="polygon"></div>
-  <div id="hidden-area"></div>
+<div id=container>
+  <div id=polygon></div>
+  <div id=hidden-area></div>
 </div>
 <script>
-  // Obter os elementos do DOM
-  var container = document.getElementById("container");
-  var polygon = document.getElementById("polygon");
-  var hiddenArea = document.getElementById("hidden-area");
+var container = document.getElementById("container"),
+    polygon = document.getElementById("polygon"),
+    hiddenArea = document.getElementById("hidden-area"),
+    containerWidth = 300,
+    containerHeight = 200,
+    polygonWidth = 100,
+    polygonHeight = 100,
+    polygonX = (containerWidth - polygonWidth) / 2,
+    polygonY = (containerHeight - polygonHeight) / 2,
+    polygonColor = "blue",
+    polygonBorder = "2px solid black",
+    polygonRadius = "0",
+    polygonLines = 6,
+    polygonAngle = 0,
+    hiddenAreaColor = "red",
+    hiddenAreaOpacity = .5,
+    words = ["Anki", "HTML", "CSS", "JS", "Extensão"],
+    phrase = "Eu gosto de {cloze:Anki}.",
+    clozeNumber = 1,
+    dragging = false;
 
-  // Definir as dimensões do retângulo e do polígono
-  var containerWidth = 300;
-  var containerHeight = 200;
-  var polygonWidth = 100;
-  var polygonHeight = 100;
-
-  // Definir as coordenadas iniciais do polígono
-  var polygonX = (containerWidth - polygonWidth) / 2;
-  var polygonY = (containerHeight - polygonHeight) / 2;
-
-  // Definir as propriedades do polígono
-  var polygonColor = "blue";
-  var polygonBorder = "2px solid black";
-  var polygonRadius = "0";
-  var polygonLines = 6;
-  var polygonAngle = 0;
-
-  // Definir as propriedades da área oculta
-  var hiddenAreaColor = "red";
-  var hiddenAreaOpacity = 0.5;
-
-  // Definir as palavras específicas que serão armazenadas na área oculta
-  var words = ["Anki", "HTML", "CSS", "JS", "Extensão"];
-
-  // Definir a frase inicial que será mostrada na área de "pergunta"
-  var phrase = "Eu gosto de {cloze:Anki}.";
-
-  // Definir o número de cloze atual
-  var clozeNumber = 1;
-
-  // Definir a flag que indica se o polígono está sendo arrastado
-  var dragging = false;
-
-  // Definir a função que atualiza o estilo do polígono
-  function updatePolygonStyle() {
+function updatePolygonStyle() {
     polygon.style.width = polygonWidth + "px";
     polygon.style.height = polygonHeight + "px";
     polygon.style.left = polygonX + "px";
@@ -53,170 +34,118 @@
     polygon.style.border = polygonBorder;
     polygon.style.borderRadius = polygonRadius;
     polygon.style.transform = "rotate(" + polygonAngle + "deg)";
-  }
+}
 
-  // Definir a função que atualiza o estilo da área oculta
-  function updateHiddenAreaStyle() {
+function updateHiddenAreaStyle() {
     hiddenArea.style.backgroundColor = hiddenAreaColor;
     hiddenArea.style.opacity = hiddenAreaOpacity;
-  }
+}
 
-  // Definir a função que atualiza o conteúdo da área oculta
-  function updateHiddenAreaContent() {
-    // Limpar o conteúdo anterior
+function updateHiddenAreaContent() {
     hiddenArea.innerHTML = "";
-
-    // Criar um elemento span para cada palavra
     for (var i = 0; i < words.length; i++) {
-      var span = document.createElement("span");
-      span.textContent = words[i];
-      span.style.position = "absolute";
-
-      // Posicionar o span de acordo com a posição e o ângulo do polígono
-      var angle = polygonAngle + (i * 360 / polygonLines);
-      var radius = polygonWidth / 2;
-      var centerX = polygonX + radius;
-      var centerY = polygonY + radius;
-      var x = centerX + Math.cos(angle * Math.PI / 180) * radius;
-      var y = centerY + Math.sin(angle * Math.PI / 180) * radius;
-      span.style.left = x + "px";
-      span.style.top = y + "px";
-
-      // Adicionar o span à área oculta
-      hiddenArea.appendChild(span);
+        var span = document.createElement("span");
+        span.textContent = words[i];
+        span.style.position = "absolute";
+        var angle = polygonAngle + 360 * i / polygonLines,
+            radius = polygonWidth / 2,
+            centerY = polygonY + radius,
+            centerX = polygonX + radius + Math.cos(angle * Math.PI / 180) * radius,
+            posY = centerY + Math.sin(angle * Math.PI / 180) * radius;
+        span.style.left = centerX + "px";
+        span.style.top = posY + "px";
+        hiddenArea.appendChild(span);
     }
-  }
+}
 
-  // Definir a função que atualiza a frase na área de "pergunta"
-  function updatePhrase() {
-    // Obter a palavra que está na mesma posição do polígono
-    var index = Math.round(polygonAngle / (360 / polygonLines)) % polygonLines;
-    var word = words[index];
+function updatePhrase() {
+    if (words.length > 0) {
+        var index = Math.round(polygonAngle / (360 / polygonLines)) % polygonLines,
+            word = words[index];
+        phrase = phrase.replace("{cloze:" + word + "}", word);
+        document.getElementById("question").textContent = phrase;
+    }
+}
 
-    // Substituir a tag cloze pela palavra
-    phrase = phrase.replace("{cloze:" + word + "}", word);
+function confirmClick() {
+    if (words.length > 0) {
+        var index = Math.round(polygonAngle / (360 / polygonLines)) % polygonLines;
+        words[index];
+        words.splice(index, 1);
+        clozeNumber++;
+        if (words.length > 0) {
+            phrase = phrase + " {cloze:" + words[0] + "}.";
+        }
+        updateHiddenAreaContent();
+    }
+}
 
-    // Mostrar a frase na área de "pergunta"
-    document.getElementById("question").textContent = phrase;
-  }
-
-  // Definir a função que confirma o clique no polígono
-  function confirmClick() {
-    // Obter a palavra que está na mesma posição do polígono
-    var index = Math.round(polygonAngle / (360 / polygonLines)) % polygonLines;
-    var word = words[index];
-
-    // Remover a palavra da lista de palavras
-    words.splice(index, 1);
-
-    // Incrementar o número de cloze
-    clozeNumber++;
-
-    // Adicionar uma nova tag cloze com a próxima palavra
-    phrase = phrase + " {cloze:" + words[0] + "}.";
-
-    // Atualizar o conteúdo da área oculta
-    updateHiddenAreaContent();
-  }
-
-  // Definir a função que lida com o evento de mouse down no polígono
-  function handleMouseDown(event) {
-    // Definir a flag de arrastar como verdadeira
+function handleMouseDown(event) {
     dragging = true;
-
-    // Prevenir o comportamento padrão do evento
     event.preventDefault();
-  }
+}
 
-  // Definir a função que lida com o evento de mouse move no container
-  function handleMouseMove(event) {
-    // Verificar se o polígono está sendo arrastado
+function handleMouseMove(event) {
     if (dragging) {
-      // Obter as coordenadas do mouse relativas ao container
-      var mouseX = event.clientX - container.offsetLeft;
-      var mouseY = event.clientY - container.offsetTop;
-
-      // Calcular o ângulo entre o mouse e o centro do polígono
-      var centerX = polygonX + polygonWidth / 2;
-      var centerY = polygonY + polygonHeight / 2;
-      var dx = mouseX - centerX;
-      var dy = mouseY - centerY;
-      var angle = Math.atan2(dy, dx) * 180 / Math.PI;
-
-      // Atualizar o ângulo do polígono
-      polygonAngle = angle;
-
-      // Atualizar o estilo do polígono
-      updatePolygonStyle();
-
-      // Atualizar o conteúdo da área oculta
-      updateHiddenAreaContent();
+        var mouseX = event.clientX - container.offsetLeft,
+            mouseY = event.clientY - container.offsetTop,
+            deltaX = mouseX - (polygonX + polygonWidth / 2),
+            deltaY = mouseY - (polygonY + polygonHeight / 2),
+            newPolygonX = polygonX + deltaX,
+            newPolygonY = polygonY + deltaY;
+        if (newPolygonX >= 0 && newPolygonX <= containerWidth - polygonWidth) {
+            polygonX = newPolygonX;
+        }
+        if (newPolygonY >= 0 && newPolygonY <= containerHeight - polygonHeight) {
+            polygonY = newPolygonY;
+        }
+        updatePolygonStyle();
+        updateHiddenAreaContent();
     }
-  }
+}
 
-  // Definir a função que lida com o evento de mouse up no container
-  function handleMouseUp(event) {
-    // Definir a flag de arrastar como falsa
+function handleMouseUp(event) {
     dragging = false;
-
-    // Atualizar a frase na área de "pergunta"
     updatePhrase();
-
-    // Confirmar o clique no polígono
     confirmClick();
-  }
+}
 
-  // Adicionar os eventos de mouse ao polígono e ao container
-  polygon.addEventListener("mousedown", handleMouseDown);
-  container.addEventListener("mousemove", handleMouseMove);
-  container.addEventListener("mouseup", handleMouseUp);
-
-  // Atualizar o estilo inicial do polígono e da área oculta
-  updatePolygonStyle();
-  updateHiddenAreaStyle();
-
-  // Atualizar o conteúdo inicial da área oculta
-  updateHiddenAreaContent();
+polygon.addEventListener("mousedown", handleMouseDown);
+container.addEventListener("mousemove", handleMouseMove);
+container.addEventListener("mouseup", handleMouseUp);
+updatePolygonStyle();
+updateHiddenAreaStyle();
+updateHiddenAreaContent();
 </script>
 <style>
-  /* Estilizar o container */
-  #container {
-    position: relative;
-    width: 300px;
-    height: 200px;
-    border: 1px solid black;
-    overflow: hidden;
-  }
-
-  /* Estilizar o polígono */
-  #polygon {
-    position: absolute;
-    cursor: move;
-  }
-
-  /* Estilizar a área oculta */
-  #hidden-area {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-  }
-
-  /* Estilizar as palavras na área oculta */
-  #hidden-area span {
-    font-weight: bold;
-    color: white;
-    font-size: 12px;
-    pointer-events: none;
-  }
-
-  /* Estilizar a área de "pergunta" */
-  #question {
-    position: absolute;
-    top: 10px;
-    left: 10px;
-    font-size: 16px;
-  }
+#container {
+  position: relative;
+  width: 300px;
+  height: 200px;
+  border: 1px solid #000;
+  overflow: hidden;
+}
+#polygon {
+  position: absolute;
+  cursor: move;
+}
+#hidden-area {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+#hidden-area span {
+  font-weight: 700;
+  color: #fff;
+  font-size: 12px;
+  pointer-events: none;
+}
+#question {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  font-size: 16px;
+}
 </style>
-<!-- Adicionar a área de "pergunta" -->
-<div id="question"></div>
+<div id=question></div>
