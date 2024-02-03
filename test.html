@@ -1,39 +1,53 @@
 {{Frente}}
+{{Teste}}
 <div id=container>
-  <div id=polygon></div>
+  <div id=cross>
+    <div id=circle></div>
+  </div>
   <div id=hidden-area></div>
 </div>
+<div id="resposta"></div>
+<button id="next">Próximo</button>
 <script>
 var container = document.getElementById("container"),
-    polygon = document.getElementById("polygon"),
+    cross = document.getElementById("cross"),
+    circle = document.getElementById("circle"),
     hiddenArea = document.getElementById("hidden-area"),
+    resposta = document.getElementById("resposta"),
+    nextButton = document.getElementById("next"),
     containerWidth = 300,
     containerHeight = 200,
-    polygonWidth = 100,
-    polygonHeight = 100,
-    polygonX = (containerWidth - polygonWidth) / 2,
-    polygonY = (containerHeight - polygonHeight) / 2,
-    polygonColor = "blue",
-    polygonBorder = "2px solid black",
-    polygonRadius = "0",
-    polygonLines = 6,
-    polygonAngle = 0,
-    hiddenAreaColor = "red",
+    crossWidth = 100,
+    crossHeight = 100,
+    crossX = (containerWidth - crossWidth) / 2,
+    crossY = (containerHeight - crossHeight) / 2,
+    crossColor = "transparent",
+    crossBorder = "1px solid blue",
+    circleRadius = "50%",
+    circleColor = "blue",
+    hiddenAreaColor = "transparent",
     hiddenAreaOpacity = .5,
-    words = ["Anki", "HTML", "CSS", "JS", "Extensão"],
-    phrase = "Eu gosto de {cloze:Anki}.",
-    clozeNumber = 1,
-    dragging = false;
+    words = ["Anki","HTML","CSS","JS","Extensão"],
+    phrase = "{{Teste}}",
+    clozeNumber = 1;
 
-function updatePolygonStyle() {
-    polygon.style.width = polygonWidth + "px";
-    polygon.style.height = polygonHeight + "px";
-    polygon.style.left = polygonX + "px";
-    polygon.style.top = polygonY + "px";
-    polygon.style.backgroundColor = polygonColor;
-    polygon.style.border = polygonBorder;
-    polygon.style.borderRadius = polygonRadius;
-    polygon.style.transform = "rotate(" + polygonAngle + "deg)";
+function updateCrossStyle() {
+    cross.style.width = crossWidth + "px";
+    cross.style.height = crossHeight + "px";
+    cross.style.left = crossX + "px";
+    cross.style.top = crossY + "px";
+    cross.style.backgroundColor = crossColor;
+    cross.style.border = crossBorder;
+}
+
+function updateCircleStyle() {
+    circle.style.width = crossWidth / 2 + "px";
+    circle.style.height = crossHeight / 2 + "px";
+    circle.style.borderRadius = circleRadius;
+    circle.style.backgroundColor = circleColor;
+    circle.style.position = "relative";
+    circle.style.left = crossWidth / 4 + "px";
+    circle.style.top = crossHeight / 4 + "px";
 }
 
 function updateHiddenAreaStyle() {
@@ -47,29 +61,31 @@ function updateHiddenAreaContent() {
         var span = document.createElement("span");
         span.textContent = words[i];
         span.style.position = "absolute";
-        var angle = polygonAngle + 360 * i / polygonLines,
-            radius = polygonWidth / 2,
-            centerY = polygonY + radius,
-            centerX = polygonX + radius + Math.cos(angle * Math.PI / 180) * radius,
-            posY = centerY + Math.sin(angle * Math.PI / 180) * radius;
-        span.style.left = centerX + "px";
+        var angle = 360 * i / words.length,
+            radius = crossWidth / 2,
+            centerY = crossY + radius,
+            centerX = crossX + radius,
+            posY = centerY + Math.sin(angle * Math.PI / 180) * radius,
+            posX = centerX + Math.cos(angle * Math.PI / 180) * radius;
+        span.style.left = posX + "px";
         span.style.top = posY + "px";
+        span.style.color = "transparent";
         hiddenArea.appendChild(span);
     }
 }
 
 function updatePhrase() {
     if (words.length > 0) {
-        var index = Math.round(polygonAngle / (360 / polygonLines)) % polygonLines,
+        var index = Math.round(crossAngle / (360 / words.length)) % words.length,
             word = words[index];
         phrase = phrase.replace("{cloze:" + word + "}", word);
-        document.getElementById("question").textContent = phrase;
+        resposta.textContent = phrase;
     }
 }
 
 function confirmClick() {
     if (words.length > 0) {
-        var index = Math.round(polygonAngle / (360 / polygonLines)) % polygonLines;
+        var index = Math.round(crossAngle / (360 / words.length)) % words.length;
         words[index];
         words.splice(index, 1);
         clozeNumber++;
@@ -80,40 +96,35 @@ function confirmClick() {
     }
 }
 
-function handleMouseDown(event) {
-    dragging = true;
-    event.preventDefault();
-}
-
 function handleMouseMove(event) {
-    if (dragging) {
-        var mouseX = event.clientX - container.offsetLeft,
-            mouseY = event.clientY - container.offsetTop,
-            deltaX = mouseX - (polygonX + polygonWidth / 2),
-            deltaY = mouseY - (polygonY + polygonHeight / 2),
-            newPolygonX = polygonX + deltaX,
-            newPolygonY = polygonY + deltaY;
-        if (newPolygonX >= 0 && newPolygonX <= containerWidth - polygonWidth) {
-            polygonX = newPolygonX;
-        }
-        if (newPolygonY >= 0 && newPolygonY <= containerHeight - polygonHeight) {
-            polygonY = newPolygonY;
-        }
-        updatePolygonStyle();
-        updateHiddenAreaContent();
+    var mouseX = event.clientX - container.offsetLeft,
+        mouseY = event.clientY - container.offsetTop,
+        deltaX = mouseX - (crossX + crossWidth / 2),
+        deltaY = mouseY - (crossY + crossHeight / 2),
+        newCrossX = crossX + deltaX,
+        newCrossY = crossY + deltaY;
+    if (newCrossX >= 0 && newCrossX <= containerWidth - crossWidth) {
+        crossX = newCrossX;
     }
-}
-
-function handleMouseUp(event) {
-    dragging = false;
+    if (newCrossY >= 0 && newCrossY <= containerHeight - crossHeight) {
+        crossY = newCrossY;
+    }
+    updateCrossStyle();
+    updateHiddenAreaContent();
     updatePhrase();
     confirmClick();
 }
 
-polygon.addEventListener("mousedown", handleMouseDown);
+nextButton.addEventListener("click", function() {
+    resposta.id = "resposta" + clozeNumber;
+    resposta = document.createElement("div");
+    resposta.id = "resposta";
+    document.body.appendChild(resposta);
+});
+
 container.addEventListener("mousemove", handleMouseMove);
-container.addEventListener("mouseup", handleMouseUp);
-updatePolygonStyle();
+updateCrossStyle();
+updateCircleStyle();
 updateHiddenAreaStyle();
 updateHiddenAreaContent();
 </script>
@@ -124,10 +135,15 @@ updateHiddenAreaContent();
   height: 200px;
   border: 1px solid #000;
   overflow: hidden;
+  background-image: linear-gradient(#eee 1px, transparent 1px), linear-gradient(90deg, #eee 1px, transparent 1px);
+  background-size: 10px 10px;
 }
-#polygon {
+#cross {
   position: absolute;
   cursor: move;
+}
+#circle {
+  position: absolute;
 }
 #hidden-area {
   position: absolute;
